@@ -19,9 +19,8 @@ def login():
     conn = sqlite3.connect('database.db')
     c = conn.cursor()
     
-    # INTENTIONAL VULNERABILITY: SQL Injection via string formatting
-    query = f"SELECT * FROM users WHERE username = '{username}' AND password = '{password}'"
-    c.execute(query)
+    query = "SELECT * FROM users WHERE username = ? AND password = ?"
+    c.execute(query, (username, password))
     user = c.fetchone()
     conn.close()
     
@@ -32,5 +31,4 @@ def login():
 
 if __name__ == '__main__':
     init_db()
-    # INTENTIONAL VULNERABILITY: Running Flask in debug mode
-    app.run(debug=True)
+    app.run(debug=False)
