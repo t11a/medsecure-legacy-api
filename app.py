@@ -19,9 +19,8 @@ def login():
     conn = sqlite3.connect('database.db')
     c = conn.cursor()
     
-    # Intentional SQL Injection vulnerability for CodeQL to catch
-    query = f"SELECT * FROM users WHERE username = '{username}' AND password = '{password}'"
-    c.execute(query)
+    query = "SELECT * FROM users WHERE username = ? AND password = ?"
+    c.execute(query, (username, password))
     user = c.fetchone()
     conn.close()
     
