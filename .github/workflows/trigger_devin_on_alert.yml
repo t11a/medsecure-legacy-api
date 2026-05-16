@@ -1,12 +1,17 @@
 name: "Trigger Devin on CodeQL Alert"
 
 on:
-  code_scanning_alert:
-    types: [created]
+  workflow_run:
+    workflows: ["CodeQL"]
+    types:
+      - completed
 
 jobs:
   call-devin:
     runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    permissions:
+      security-events: read
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -23,8 +28,7 @@ jobs:
         env:
           DEVIN_API_KEY: ${{ secrets.DEVIN_API_KEY }}
           DEVIN_ORG_ID: ${{ secrets.DEVIN_ORG_ID }}
-          # github.event.alert contains the full JSON of the alert that triggered this action
-          ALERT_JSON: ${{ toJson(github.event.alert) }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           REPO_URL: ${{ github.server_url }}/${{ github.repository }}
         run: |
           python .github/scripts/trigger_devin.py
