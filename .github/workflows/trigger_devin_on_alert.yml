@@ -13,6 +13,7 @@ jobs:
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
     permissions:
       security-events: read
+      pull-requests: read
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4

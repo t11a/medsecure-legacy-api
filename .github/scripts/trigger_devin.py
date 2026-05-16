@@ -2,7 +2,6 @@ import os
 import requests
 
 def get_codeql_alerts(repo_url, github_token):
-    # repo_url is like https://github.com/t11a/medsecure-legacy-api
     repo_path = repo_url.replace("https://github.com/", "")
     url = f"https://api.github.com/repos/{repo_path}/code-scanning/alerts?state=open"
     headers = {
@@ -20,6 +19,21 @@ def get_codeql_alerts(repo_url, github_token):
         print(f"Error fetching alerts: {response.status_code} - {response.text}")
         return []
 
+def get_open_prs(repo_url, github_token):
+    repo_path = repo_url.replace("https://github.com/", "")
+    url = f"https://api.github.com/repos/{repo_path}/pulls?state=open"
+    headers = {
+        "Accept": "application/vnd.github+json",
+        "Authorization": f"Bearer {github_token}",
+        "X-GitHub-Api-Version": "2022-11-28"
+    }
+    response = requests.get(url, headers=headers)
+    if response.status_code == 200:
+        return response.json()
+    else:
+        print(f"Error fetching PRs: {response.status_code} - {response.text}")
+        return []
+
 def main():
     devin_api_key = os.getenv("DEVIN_API_KEY")
     devin_org_id = os.getenv("DEVIN_ORG_ID")
@@ -35,7 +49,26 @@ def main():
         print("No open alerts found.")
         return
 
+    open_prs = get_open_prs(repo_url, github_token)
+
     for alert in alerts:
+        alert_number = alert.get("number")
+        
+        # Check if any open PR already addresses this alert
+        pr_exists = False
+        alert_marker = f"[CodeQL Alert #{alert_number}]"
+        
+        for pr in open_prs:
+            title = pr.get("title", "")
+            body = pr.get("body", "") or ""
+            if alert_marker in title or alert_marker in body:
+                pr_exists = True
+                print(f"Skipping alert #{alert_number} as PR '{title}' already exists.")
+                break
+                
+        if pr_exists:
+            continue
+
         rule_name = alert.get("rule", {}).get("name", "Unknown Rule")
         rule_description = alert.get("rule", {}).get("description", "No description")
         severity = alert.get("rule", {}).get("security_severity_level", "unknown")
@@ -47,6 +80,7 @@ def main():
         prompt = f"""CodeQL has detected a '{severity}' security vulnerability in the repository {repo_url}.
 
 Details:
+- Alert Number: {alert_number}
 - Rule: {rule_name}
 - Description: {rule_description}
 - File: {file_path}
@@ -56,10 +90,10 @@ Your task:
 1. Clone the repository {repo_url}
 2. Fix this security vulnerability.
 3. Ensure the fix does not break existing functionality.
-4. Create a Pull Request with a clear description indicating that this is an automated CodeQL remediation.
+4. Create a Pull Request with the exact string `{alert_marker}` in the Pull Request title or body so we can track it.
 """
 
-        print(f"Triggering Devin for alert: {rule_name} in {file_path}:{start_line}")
+        print(f"Triggering Devin for alert #{alert_number}: {rule_name} in {file_path}:{start_line}")
         
         url = f"https://api.devin.ai/v3/organizations/{devin_org_id}/sessions"
         headers = {
