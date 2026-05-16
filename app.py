@@ -1,4 +1,5 @@
 from flask import Flask, request
+import os
 import sqlite3
 
 app = Flask(__name__)
@@ -32,5 +33,4 @@ def login():
 
 if __name__ == '__main__':
     init_db()
-    # INTENTIONAL VULNERABILITY: Running Flask in debug mode
-    app.run(debug=True)
+    app.run(debug=os.environ.get('FLASK_DEBUG', 'False').lower() == 'true')
