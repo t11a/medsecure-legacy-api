@@ -1,0 +1,30 @@
+name: "Trigger Devin on CodeQL Alert"
+
+on:
+  code_scanning_alert:
+    types: [created]
+
+jobs:
+  call-devin:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.14'
+
+      - name: Install dependencies
+        run: pip install requests
+
+      - name: Trigger Devin
+        env:
+          DEVIN_API_KEY: ${{ secrets.DEVIN_API_KEY }}
+          DEVIN_ORG_ID: ${{ secrets.DEVIN_ORG_ID }}
+          # github.event.alert contains the full JSON of the alert that triggered this action
+          ALERT_JSON: ${{ toJson(github.event.alert) }}
+          REPO_URL: ${{ github.server_url }}/${{ github.repository }}
+        run: |
+          python .github/scripts/trigger_devin.py
