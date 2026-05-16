@@ -32,5 +32,4 @@ def login():
 
 if __name__ == '__main__':
     init_db()
-    # INTENTIONAL VULNERABILITY: Running Flask in debug mode
-    app.run(debug=True)
+    app.run(debug=False)
