@@ -3,6 +3,7 @@ name: "Trigger Devin on CodeQL Alert"
 on:
   workflow_run:
     workflows: ["CodeQL"]
+    branches: ["main"]
     types:
       - completed
 
