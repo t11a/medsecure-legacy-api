@@ -1,4 +1,7 @@
 # Overview
+
+> **Note:** This project is a deliverable for **Client C: MedSecure -- "Our security backlog is a compliance risk"**.
+
 This is a Devin sample app project demonstrating an automated security remediation pipeline using GitHub Actions, CodeQL, and the Devin API.
 
 ## Automated Remediation Workflow
